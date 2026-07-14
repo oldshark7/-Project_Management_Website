@@ -17,7 +17,7 @@ RUN npm run build
 # ==========================
 # Stage 2 : Laravel
 # ==========================
-FROM php:8.3-cli
+FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -31,6 +31,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 COPY . .
+RUN touch database/database.sqlite
 
 COPY --from=frontend /app/public/build ./public/build
 

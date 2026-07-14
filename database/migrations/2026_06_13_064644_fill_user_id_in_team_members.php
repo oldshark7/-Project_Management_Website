@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,14 +10,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('team_members', function (Blueprint $table) {
-            DB::statement("
-                UPDATE team_members tm
-                SET user_id = u.id
-                FROM users u
-                WHERE LOWER(tm.name) = LOWER(u.name)
-            ");
-        });
+        $users = DB::table('users')->select('id', 'name')->get();
+
+        foreach ($users as $user) {
+            DB::table('team_members')
+                ->whereRaw('LOWER(name) = ?', [strtolower($user->name)])
+                ->update(['user_id' => $user->id]);
+        }
     }
 
     /**
@@ -26,11 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('team_members', function (Blueprint $table) {
-            DB::statement("
-                UPDATE team_members
-                SET user_id = NULL
-            ");
-        });
+        DB::table('team_members')->update(['user_id' => null]);
     }
 };

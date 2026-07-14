@@ -214,6 +214,17 @@ class DashboardService
             ->join('task_user', 'wbs_items.id', '=', 'task_user.wbs_item_id')
             ->where('task_user.user_id', $user->id);
 
+        $overdueTask = (clone $tasks)
+            ->where('wbs_items.kanban_status', '!=', 'done')
+            ->get()
+            ->filter(function ($task) {
+                $dueDate = Carbon::parse($task->created_at)
+                    ->addDays($task->estimated_duration_days);
+
+                return $dueDate->isPast();
+            })
+            ->count();
+
         return [
             'on_progress_task' => (clone $tasks)
                 ->where('wbs_items.kanban_status', 'ongoing')
@@ -227,14 +238,7 @@ class DashboardService
                 ->where('wbs_items.kanban_status', 'done')
                 ->count(),
 
-            'overdue_task' => (clone $tasks)
-                ->where('wbs_items.kanban_status', '!=', 'done')
-                ->whereRaw("
-                wbs_items.created_at
-                + (wbs_items.estimated_duration_days * interval '1 day')
-                < NOW()
-            ")
-                ->count(),
+            'overdue_task' => $overdueTask,
         ];
     }
 
@@ -245,7 +249,7 @@ class DashboardService
             return collect();
         }
 
-        return DB::table('task_user')
+        $tasks = DB::table('task_user')
             ->join('wbs_items', 'task_user.wbs_item_id', '=', 'wbs_items.id')
             ->join('projects', 'wbs_items.project_id', '=', 'projects.id')
             ->where('task_user.user_id', $user->id)
@@ -263,14 +267,20 @@ class DashboardService
                 'wbs_items.title as task_name',
                 'wbs_items.priority',
                 'wbs_items.kanban_status',
-                DB::raw("
-                wbs_items.created_at
-                + (wbs_items.estimated_duration_days * interval '1 day')
-                as due_date
-            "),
+                'wbs_items.created_at',
+                'wbs_items.estimated_duration_days',
             ])
             ->limit(5)
-            ->get();
+            ->get()
+            ->map(function ($row) {
+                $dueDate = Carbon::parse($row->created_at)
+                    ->addDays($row->estimated_duration_days);
+
+                $row->due_date = $dueDate->toDateTimeString();
+                return $row;
+            });
+
+        return $tasks;
     }
 
     // Query blueprint for projects table

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('wbs_items', function (Blueprint $table) {
-            $table->enum('kanban_status', ['todo', 'ongoing', 'review', 'approved'])
+            $table->string('kanban_status', 50)
                 ->default('todo')
                 ->after('status');
         });

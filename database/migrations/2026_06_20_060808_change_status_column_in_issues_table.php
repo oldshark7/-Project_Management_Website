@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -19,12 +20,13 @@ return new class extends Migration
             $table->string('status')->default('open');
         });
 
-        // optional: enforce constraint di PostgreSQL
-        DB::statement("
-        ALTER TABLE issues
-        ADD CONSTRAINT status_check
-        CHECK (status IN ('open','in_progress','done','closed'))
-    ");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("
+            ALTER TABLE issues
+            ADD CONSTRAINT status_check
+            CHECK (status IN ('open','in_progress','done','closed'))
+        ");
+        }
     }
 
     /**
@@ -32,7 +34,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE issues DROP CONSTRAINT IF EXISTS status_check");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE issues DROP CONSTRAINT IF EXISTS status_check");
+        }
 
         Schema::table('issues', function (Blueprint $table) {
             $table->dropColumn('status');

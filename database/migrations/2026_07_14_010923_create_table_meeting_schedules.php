@@ -21,17 +21,8 @@ return new class extends Migration
 
             // Informasi Meeting
             $table->string('title');
-            $table->enum('meeting_type', [
-                'Project Kickoff',
-                'Progress Meeting',
-                'Coordination Meeting',
-                'Client Meeting',
-                'Issue Discussion',
-                'Risk Review',
-                'Change Request Review',
-                'Project Closing',
-                'Other',
-            ])->default('Progress Meeting');
+            $table->string('meeting_type', 50)
+                ->default('Progress Meeting');
 
             $table->date('meeting_date');
             $table->time('start_time');
@@ -50,11 +41,8 @@ return new class extends Migration
             $table->text('description')->nullable();
 
             // Status
-            $table->enum('status', [
-                'Scheduled',
-                'Completed',
-                'Cancelled'
-            ])->default('Scheduled');
+            $table->string('status', 50)
+                ->default('Scheduled');
 
             // Audit
             $table->foreignId('created_by')

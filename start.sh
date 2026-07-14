@@ -1,5 +1,7 @@
 #!/bin/sh
 
+touch database/database.sqlite
+
 php artisan config:clear
 php artisan cache:clear
 
